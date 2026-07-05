@@ -12,16 +12,19 @@ import { createActions } from "./actions";
 import {
   forgetRemembered,
   loadRemembered,
+  mergeSavedGroups,
   saveRemembered,
   snapshotOpenGroups,
   syncRemembered,
+  type DisplayedSavedGroup,
 } from "./group-store";
+import type { RememberedGroup } from "./state";
+import { fetchNativeSavedGroups } from "./native-host";
 import { renderList } from "./render/list";
 import { renderGrid } from "./render/grid";
 import { renderRemembered } from "./render/remembered";
 import { createToaster } from "./render/shared";
 import { tabCountLabel } from "./format";
-import type { RememberedGroup } from "./state";
 
 function el<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);
@@ -80,22 +83,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // the core UI from appearing.
     render();
 
-    // Best-effort: snapshot open groups so they stay reachable after Chrome
-    // closes them.
+    // Best-effort from here down; failures only cost the saved-groups
+    // section, never the tab list.
+    const open = snapshotOpenGroups(state.tabs, state.groups);
+    let notOpen: RememberedGroup[] = [];
     try {
       const stored = await loadRemembered();
-      const { all, notOpen } = syncRemembered(
-        stored,
-        snapshotOpenGroups(state.tabs, state.groups),
-        Date.now(),
-      );
-      await saveRemembered(all);
-      if (seq !== loadSeq) return;
-      state.remembered = notOpen;
-      render();
+      const synced = syncRemembered(stored, open, Date.now());
+      await saveRemembered(synced.all);
+      notOpen = synced.notOpen;
     } catch (err) {
       console.error("Groupie: failed to sync saved groups", err);
     }
+    const native = await fetchNativeSavedGroups();
+    if (seq !== loadSeq) return;
+    state.saved = mergeSavedGroups(native, notOpen, open);
+    render();
   }
 
   const actions = createActions(state, {
@@ -121,10 +124,10 @@ document.addEventListener("DOMContentLoaded", () => {
       els.gridView.hidden = true;
       els.listView.hidden = false;
       renderList(state, els, listHandlers);
-      renderRemembered(els.rememberedContainer, state.remembered, {
-        reopenGroup: (group: RememberedGroup) =>
+      renderRemembered(els.rememberedContainer, state.saved, {
+        reopenGroup: (group: DisplayedSavedGroup) =>
           void actions.reopenGroup(group),
-        forgetGroup: (group: RememberedGroup) =>
+        forgetGroup: (group: DisplayedSavedGroup) =>
           void forgetRemembered(group.key).then(loadData),
       });
     }
