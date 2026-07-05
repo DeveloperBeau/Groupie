@@ -4,13 +4,17 @@
 
 const MANAGER_PATH = "manager.html";
 
-chrome.action.onClicked.addListener(async () => {
+chrome.action.onClicked.addListener(() => {
+  void openManager();
+});
+
+async function openManager(): Promise<void> {
   const managerUrl = chrome.runtime.getURL(MANAGER_PATH);
 
   try {
     const existing = await chrome.tabs.query({ url: managerUrl });
-    if (existing.length > 0) {
-      const tab = existing[0];
+    const tab = existing[0];
+    if (tab?.id != null) {
       await chrome.tabs.update(tab.id, { active: true });
       if (tab.windowId != null) {
         await chrome.windows.update(tab.windowId, { focused: true });
@@ -23,4 +27,4 @@ chrome.action.onClicked.addListener(async () => {
     console.error("Groupie: failed to open manager", err);
     await chrome.tabs.create({ url: managerUrl });
   }
-});
+}

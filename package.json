@@ -20,6 +20,7 @@
     "icons": "python3 scripts/make_icons.py"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/chrome": "^0.2.2",
     "esbuild": "^0.28.1",
     "eslint": "^10.6.0",

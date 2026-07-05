@@ -21,8 +21,9 @@ export default tseslint.config(
     files: ["scripts/**/*.mjs", "eslint.config.js"],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: {
-      globals: globals.node,
+      // Browser globals cover code inside Playwright page.evaluate callbacks.
+      globals: { ...globals.node, ...globals.browser },
     },
   },
-  prettier
+  prettier,
 );

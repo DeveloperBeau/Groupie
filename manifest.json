@@ -3,7 +3,7 @@
   "name": "Groupie",
   "version": "1.0.0",
   "description": "See, group, and close every open tab from one page. Built because Claude makes way too many tabs and doesn't clean up after itself.",
-  "permissions": ["tabs", "tabGroups"],
+  "permissions": ["tabs", "tabGroups", "favicon"],
   "background": {
     "service_worker": "background.js"
   },
