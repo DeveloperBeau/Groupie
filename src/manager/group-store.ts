@@ -95,14 +95,25 @@ export function syncRemembered(
   return { all, notOpen };
 }
 
+// chrome.storage is only present when the "storage" permission is active. If
+// an older build of the extension is still loaded (permission not yet
+// granted), treat storage as empty rather than throwing on every load.
+function localStorageArea(): chrome.storage.LocalStorageArea | null {
+  return chrome.storage?.local ?? null;
+}
+
 export async function loadRemembered(): Promise<RememberedGroup[]> {
-  const data = await chrome.storage.local.get(STORAGE_KEY);
+  const area = localStorageArea();
+  if (!area) return [];
+  const data = await area.get(STORAGE_KEY);
   const value: unknown = data[STORAGE_KEY];
   return Array.isArray(value) ? (value as RememberedGroup[]) : [];
 }
 
 export async function saveRemembered(groups: RememberedGroup[]): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEY]: groups });
+  const area = localStorageArea();
+  if (!area) return;
+  await area.set({ [STORAGE_KEY]: groups });
 }
 
 export async function forgetRemembered(key: string): Promise<void> {

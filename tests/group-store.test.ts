@@ -182,3 +182,19 @@ describe("groupKey", () => {
     );
   });
 });
+
+describe("storage guards", () => {
+  it("loadRemembered returns [] and saveRemembered no-ops when chrome.storage is absent", async () => {
+    const original = (globalThis as { chrome?: unknown }).chrome;
+    (globalThis as { chrome?: unknown }).chrome = { storage: undefined };
+    try {
+      const { loadRemembered, saveRemembered, forgetRemembered } =
+        await import("../src/manager/group-store");
+      expect(await loadRemembered()).toEqual([]);
+      expect(await saveRemembered([])).toBeUndefined();
+      expect(await forgetRemembered("k")).toBeUndefined();
+    } finally {
+      (globalThis as { chrome?: unknown }).chrome = original;
+    }
+  });
+});
