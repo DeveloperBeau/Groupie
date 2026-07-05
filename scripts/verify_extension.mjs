@@ -24,7 +24,6 @@ const errors = [];
 const mgr = await openManager({ onPageError: (e) => errors.push(String(e)) });
 await mgr.waitForSelector(".tab-row");
 
-const toastText = () => mgr.locator("#toast").textContent();
 const waitForToast = (expected) =>
   mgr.waitForFunction(
     (want) => document.querySelector("#toast")?.textContent?.includes(want),

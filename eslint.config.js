@@ -21,8 +21,17 @@ export default tseslint.config(
     files: ["scripts/**/*.mjs", "eslint.config.js"],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: {
-      // Browser globals cover code inside Playwright page.evaluate callbacks.
-      globals: { ...globals.node, ...globals.browser },
+      // Browser globals cover code inside Playwright page.evaluate callbacks,
+      // which also has access to the chrome extension APIs.
+      globals: { ...globals.node, ...globals.browser, chrome: "readonly" },
+    },
+  },
+  {
+    files: ["tests/**/*.ts"],
+    rules: {
+      // Asserting on vi.fn() members (expect(api.removeTabs)...) trips this
+      // rule, but Vitest matchers never rebind `this`.
+      "@typescript-eslint/unbound-method": "off",
     },
   },
   prettier,
