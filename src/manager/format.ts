@@ -14,6 +14,23 @@ export function tabCountLabel(count: number): string {
   return `${count} tab${count === 1 ? "" : "s"}`;
 }
 
+// Compact "where do these urls go" summary, e.g. "github.com, seek.com.au +2".
+export function hostSummary(urls: string[], max = 3): string {
+  const hosts: string[] = [];
+  for (const url of urls) {
+    let host: string;
+    try {
+      host = new URL(url).hostname || url;
+    } catch {
+      host = url;
+    }
+    if (host && !hosts.includes(host)) hosts.push(host);
+  }
+  const shown = hosts.slice(0, max).join(", ");
+  const extra = hosts.length - max;
+  return extra > 0 ? `${shown} +${extra}` : shown;
+}
+
 // Builds a Chrome _favicon lookup URL. `base` is the extension's /_favicon/
 // endpoint (injected so this stays pure); returns null when the tab has no URL
 // so callers can fall back to the placeholder icon.

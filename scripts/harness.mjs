@@ -60,5 +60,5 @@ export async function launchWithExtension({ seedUrls = [], viewport } = {}) {
     fs.rmSync(userDataDir, { recursive: true, force: true });
   }
 
-  return { ctx, extId, openManager, cleanup };
+  return { ctx, extId, worker: sw, openManager, cleanup };
 }

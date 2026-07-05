@@ -59,13 +59,18 @@ describe("syncRemembered", () => {
     const open = [{ group: group(7, "Work"), urls: ["https://a.test/"] }];
     const { all, notOpen } = syncRemembered([], open, 100);
     expect(all).toHaveLength(1);
-    expect(all[0]?.key).toBe(groupKey("blue", "Work"));
+    expect(all[0]?.key).toBe(groupKey("blue", "Work", ["https://a.test/"]));
     expect(all[0]?.lastSeen).toBe(100);
     expect(notOpen).toEqual([]);
   });
 
   it("keeps entries for groups that are no longer open", () => {
-    const stored = [remembered({ key: groupKey("blue", "Old"), title: "Old" })];
+    const stored = [
+      remembered({
+        key: groupKey("blue", "Old", ["https://example.com/"]),
+        title: "Old",
+      }),
+    ];
     const { all, notOpen } = syncRemembered(stored, [], 100);
     expect(all).toHaveLength(1);
     expect(notOpen.map((g) => g.title)).toEqual(["Old"]);
@@ -74,7 +79,7 @@ describe("syncRemembered", () => {
   it("drops the stale entry when an open group was renamed", () => {
     const stored = [
       remembered({
-        key: groupKey("blue", "Before"),
+        key: groupKey("blue", "Before", ["https://a.test/"]),
         title: "Before",
         lastGroupId: 7,
       }),
@@ -86,9 +91,14 @@ describe("syncRemembered", () => {
   });
 
   it("updates an existing entry's urls and lastSeen when reopened", () => {
-    const key = groupKey("blue", "Work");
+    const key = groupKey("blue", "Work", ["https://old.test/"]);
     const stored = [
-      remembered({ key, title: "Work", urls: ["https://old.test/"] }),
+      remembered({
+        key,
+        title: "Work",
+        urls: ["https://old.test/"],
+        lastGroupId: 9,
+      }),
     ];
     const open = [{ group: group(9, "Work"), urls: ["https://new.test/"] }];
     const { all } = syncRemembered(stored, open, 200);
@@ -115,7 +125,12 @@ describe("syncRemembered", () => {
         lastGroupId: fc.integer({ min: 1, max: 30 }),
         lastSeen: fc.integer({ min: 0, max: 1000 }),
       })
-      .map((r) => remembered({ ...r, key: groupKey(r.color, r.title) }));
+      .map((r) =>
+        remembered({
+          ...r,
+          key: groupKey(r.color, r.title, ["https://example.com/"]),
+        }),
+      );
     const arbOpen = fc
       .record({
         id: fc.integer({ min: 1, max: 30 }),
@@ -133,13 +148,37 @@ describe("syncRemembered", () => {
         (stored, open) => {
           const { notOpen } = syncRemembered(stored, open, 5000);
           const openKeys = new Set(
-            open.map((o) => groupKey(o.group.color, o.group.title ?? "")),
+            open.map((o) =>
+              groupKey(o.group.color, o.group.title ?? "", o.urls),
+            ),
           );
           for (const entry of notOpen) {
             expect(openKeys.has(entry.key)).toBe(false);
           }
         },
       ),
+    );
+  });
+});
+
+describe("groupKey", () => {
+  it("distinguishes same-name same-color groups by their tabs", () => {
+    const a = groupKey("blue", "Daily job scan", ["https://a.test/"]);
+    const b = groupKey("blue", "Daily job scan", ["https://b.test/"]);
+    expect(a).not.toBe(b);
+  });
+
+  it("ignores tab order", () => {
+    const a = groupKey("blue", "Work", ["https://a.test/", "https://b.test/"]);
+    const b = groupKey("blue", "Work", ["https://b.test/", "https://a.test/"]);
+    expect(a).toBe(b);
+  });
+
+  it("is stable for identical inputs (fuzz)", () => {
+    fc.assert(
+      fc.property(fc.array(fc.webUrl(), { maxLength: 8 }), (urls) => {
+        expect(groupKey("red", "t", urls)).toBe(groupKey("red", "t", urls));
+      }),
     );
   });
 });
