@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 import {
   TAB_GROUP_ID_NONE,

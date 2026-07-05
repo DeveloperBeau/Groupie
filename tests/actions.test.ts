@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock, spyOn } from "bun:test";
 import { createActions, type ActionDeps } from "../src/manager/actions";
 import { createState, type ManagerState, type Tab } from "../src/manager/state";
 import type { TabsApi } from "../src/manager/tabs-api";
@@ -15,28 +15,21 @@ function tab(
 
 function fakeApi(overrides: Partial<TabsApi> = {}): TabsApi {
   return {
-    queryTabs: vi.fn().mockResolvedValue([]),
-    queryGroups: vi.fn().mockResolvedValue([]),
-    removeTabs: vi.fn().mockResolvedValue(undefined),
-    activateTab: vi.fn().mockResolvedValue(undefined),
-    focusWindow: vi.fn().mockResolvedValue(undefined),
-    groupTabs: vi.fn().mockResolvedValue(100),
-    updateGroup: vi.fn().mockResolvedValue(undefined),
+    queryTabs: mock(() => Promise.resolve([])),
+    queryGroups: mock(() => Promise.resolve([])),
+    removeTabs: mock(() => Promise.resolve()),
+    activateTab: mock(() => Promise.resolve()),
+    focusWindow: mock(() => Promise.resolve()),
+    groupTabs: mock(() => Promise.resolve(100)),
+    updateGroup: mock(() => Promise.resolve()),
     ...overrides,
   };
 }
 
-function setup(
-  state: ManagerState,
-  apiOverrides: Partial<TabsApi> = {},
-): {
-  deps: ActionDeps;
-  notify: ReturnType<typeof vi.fn>;
-  reload: ReturnType<typeof vi.fn>;
-} {
-  const notify = vi.fn();
-  const reload = vi.fn().mockResolvedValue(undefined);
-  const deps = { tabsApi: fakeApi(apiOverrides), notify, reload };
+function setup(state: ManagerState, apiOverrides: Partial<TabsApi> = {}) {
+  const notify = mock((_message: string) => {});
+  const reload = mock(() => Promise.resolve());
+  const deps: ActionDeps = { tabsApi: fakeApi(apiOverrides), notify, reload };
   return { deps, notify, reload };
 }
 
@@ -52,21 +45,21 @@ describe("closeTabs", () => {
     expect(deps.tabsApi.removeTabs).toHaveBeenCalledWith([1, 2]);
     expect([...state.selected]).toEqual([3]);
     expect(notify).toHaveBeenCalledWith("Closed 2 tabs.");
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("surfaces a failure notification and still reloads", async () => {
     const state = createState();
     const { deps, notify, reload } = setup(state, {
-      removeTabs: vi.fn().mockRejectedValue(new Error("gone")),
+      removeTabs: mock(() => Promise.reject(new Error("gone"))),
     });
     const actions = createActions(state, deps);
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    spyOn(console, "error").mockImplementation(() => {});
 
     await actions.closeTabs([1]);
 
     expect(notify).toHaveBeenCalledWith("Couldn't close some tabs.");
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing for an empty id list", async () => {
@@ -117,16 +110,16 @@ describe("renameGroup", () => {
   it("notifies and reloads when the rename fails", async () => {
     const state = stateWithGroup(7, "Old");
     const { deps, notify, reload } = setup(state, {
-      updateGroup: vi.fn().mockRejectedValue(new Error("nope")),
+      updateGroup: mock(() => Promise.reject(new Error("nope"))),
     });
     const actions = createActions(state, deps);
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    spyOn(console, "error").mockImplementation(() => {});
 
     await actions.renameGroup(7, "New");
 
     expect(state.groups.get(7)?.title).toBe("Old");
     expect(notify).toHaveBeenCalledWith("Couldn't rename that group.");
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -147,15 +140,14 @@ describe("groupSelected", () => {
     });
     expect(state.selected.size).toBe(0);
     expect(notify).toHaveBeenCalledWith("Grouped 2 tabs into “Research”.");
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("creates one group per window for a multi-window selection", async () => {
     const state = createState();
     state.tabs = [tab(1, { windowId: 1 }), tab(2, { windowId: 2 })];
     state.selected = new Set([1, 2]);
-    const groupTabs = vi
-      .fn()
+    const groupTabs = mock(() => Promise.resolve(0))
       .mockResolvedValueOnce(100)
       .mockResolvedValueOnce(200);
     const { deps, notify } = setup(state, { groupTabs });
@@ -206,20 +198,19 @@ describe("groupSelected", () => {
     const state = createState();
     state.tabs = [tab(1, { windowId: 1 }), tab(2, { windowId: 2 })];
     state.selected = new Set([1, 2]);
-    const groupTabs = vi
-      .fn()
+    const groupTabs = mock(() => Promise.resolve(0))
       .mockResolvedValueOnce(100)
       .mockRejectedValueOnce(new Error("window closed"));
     const { deps, notify, reload } = setup(state, { groupTabs });
     const actions = createActions(state, deps);
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    spyOn(console, "error").mockImplementation(() => {});
 
     const result = await actions.groupSelected("Half");
 
     expect(result.grouped).toBe(false);
     expect(notify).toHaveBeenCalledWith("Couldn't group those tabs.");
     expect(state.selected.size).toBe(0);
-    expect(reload).toHaveBeenCalledOnce();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("returns ungrouped for an empty selection", async () => {

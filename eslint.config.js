@@ -16,6 +16,12 @@ export default tseslint.config(
       },
       globals: { ...globals.browser, chrome: "readonly" },
     },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
+    },
   },
   {
     files: ["scripts/**/*.mjs", "eslint.config.js"],
