@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Groupie</title>
+    <link rel="stylesheet" href="manager.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">G</div>
+        <div class="brand-text">
+          <h1>Groupie</h1>
+          <p class="tagline">Tame the tabs.</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span id="tab-count" class="tab-count">0 tabs</span>
+        <button id="refresh-btn" class="btn btn-ghost" title="Refresh">
+          <span class="icon">&#x21bb;</span> Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- LIST VIEW -->
+    <main id="list-view" class="view">
+      <div id="selection-bar" class="selection-bar" hidden>
+        <div class="selection-info">
+          <label class="checkbox">
+            <input type="checkbox" id="select-all" />
+            <span></span>
+          </label>
+          <span id="selection-count">0 selected</span>
+        </div>
+        <div class="selection-actions">
+          <div class="group-create">
+            <input
+              type="text"
+              id="new-group-name"
+              class="text-input"
+              placeholder="New group name&hellip;"
+              maxlength="60"
+            />
+            <button id="group-btn" class="btn btn-primary">Group selected</button>
+          </div>
+          <button id="delete-btn" class="btn btn-danger">
+            <span class="icon">&#x1f5d1;</span> Delete
+          </button>
+        </div>
+      </div>
+
+      <div id="groups-container" class="groups-container"></div>
+
+      <div id="empty-state" class="empty-state" hidden>
+        <div class="empty-emoji">&#x1f9f9;</div>
+        <p>No tabs to show. You're all clean.</p>
+      </div>
+    </main>
+
+    <!-- GRID VIEW -->
+    <main id="grid-view" class="view" hidden>
+      <div class="grid-header">
+        <button id="back-btn" class="btn btn-ghost">
+          <span class="icon">&#x2190;</span> Back
+        </button>
+        <div class="grid-title">
+          <span id="grid-group-dot" class="group-dot"></span>
+          <h2 id="grid-group-name">Group</h2>
+          <span id="grid-group-count" class="tab-count"></span>
+        </div>
+        <div class="grid-header-spacer"></div>
+      </div>
+      <div id="grid-container" class="grid-container"></div>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="manager.js"></script>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Groupie",
+  "version": "1.0.0",
+  "description": "See, group, and close every open tab from one page. Built because Claude makes way too many tabs and doesn't clean up after itself.",
+  "permissions": ["tabs", "tabGroups"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Groupie - open tab manager",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
