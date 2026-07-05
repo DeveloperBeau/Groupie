@@ -109,3 +109,50 @@ export async function forgetRemembered(key: string): Promise<void> {
   const stored = await loadRemembered();
   await saveRemembered(stored.filter((g) => g.key !== key));
 }
+
+// What the saved-groups section displays: Chrome's own saved groups (via the
+// optional native host) merged with Groupie's snapshots, minus anything
+// currently open.
+export interface DisplayedSavedGroup {
+  key: string;
+  title: string;
+  color: `${chrome.tabGroups.Color}`;
+  urls: string[];
+  source: "chrome" | "groupie";
+}
+
+export function mergeSavedGroups(
+  native: Array<{
+    title: string;
+    color: `${chrome.tabGroups.Color}`;
+    urls: string[];
+  }> | null,
+  notOpen: RememberedGroup[],
+  open: OpenGroupSnapshot[],
+): DisplayedSavedGroup[] {
+  const openKeys = new Set(
+    open.map(({ group, urls }) =>
+      groupKey(group.color, group.title ?? "", urls),
+    ),
+  );
+  const seen = new Set<string>();
+  const merged: DisplayedSavedGroup[] = [];
+  for (const g of native ?? []) {
+    const key = groupKey(g.color, g.title, g.urls);
+    if (openKeys.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    merged.push({ ...g, key, source: "chrome" });
+  }
+  for (const r of notOpen) {
+    if (seen.has(r.key) || openKeys.has(r.key)) continue;
+    seen.add(r.key);
+    merged.push({
+      key: r.key,
+      title: r.title,
+      color: r.color,
+      urls: r.urls,
+      source: "groupie",
+    });
+  }
+  return merged;
+}

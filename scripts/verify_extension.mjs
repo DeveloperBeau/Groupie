@@ -1,5 +1,7 @@
 // End-to-end smoke test: load the built extension in Chromium, open tabs, and
 // drive the manager UI through the core flows. Run `npm run test:e2e`.
+import fs from "node:fs";
+import path from "node:path";
 import { launchWithExtension } from "./harness.mjs";
 
 const results = [];
@@ -15,9 +17,10 @@ const seed = [
   "https://www.iana.org/help/example-domains",
 ];
 
-const { ctx, extId, worker, openManager, cleanup } = await launchWithExtension({
-  seedUrls: seed,
-});
+const { ctx, extId, worker, userDataDir, openManager, cleanup } =
+  await launchWithExtension({
+    seedUrls: seed,
+  });
 console.log("extension id:", extId);
 
 const errors = [];
@@ -334,6 +337,75 @@ check(
   ),
 );
 await mgr2.close();
+
+// --- Native host: a fake host makes Chrome's saved groups appear ---
+const hostDir = path.join(userDataDir, "NativeMessagingHosts");
+fs.mkdirSync(hostDir, { recursive: true });
+const hostScript = path.join(hostDir, "fake-groupie-host.py");
+fs.writeFileSync(
+  hostScript,
+  `#!/usr/bin/env python3
+import sys, struct, json
+resp = json.dumps({"ok": True, "groups": [
+    {"title": "Native fixture", "color": "purple", "urls": ["https://example.com/"]}
+]}).encode()
+sys.stdout.buffer.write(struct.pack("<I", len(resp)) + resp)
+sys.stdout.flush()
+`,
+  { mode: 0o755 },
+);
+fs.writeFileSync(
+  path.join(hostDir, "com.groupie.saved_groups.json"),
+  JSON.stringify({
+    name: "com.groupie.saved_groups",
+    description: "test fixture",
+    path: hostScript,
+    type: "stdio",
+    allowed_origins: [`chrome-extension://${extId}/`],
+  }),
+);
+
+const mgr3 = await openManager();
+await mgr3.waitForSelector(".remembered-group .source-badge");
+check(
+  "native host groups appear with a from-Chrome badge",
+  await mgr3.evaluate(() =>
+    [...document.querySelectorAll(".remembered-group")].some(
+      (s) =>
+        s.querySelector(".group-name-static")?.textContent ===
+          "Native fixture" && s.querySelector(".source-badge"),
+    ),
+  ),
+);
+check(
+  "native entries offer Open but not Forget",
+  await mgr3.evaluate(() => {
+    const section = [...document.querySelectorAll(".remembered-group")].find(
+      (s) =>
+        s.querySelector(".group-name-static")?.textContent === "Native fixture",
+    );
+    const labels = [...section.querySelectorAll("button")].map(
+      (b) => b.textContent,
+    );
+    return labels.includes("Open group") && !labels.includes("Forget");
+  }),
+);
+await mgr3.evaluate(() => {
+  const section = [...document.querySelectorAll(".remembered-group")].find(
+    (s) =>
+      s.querySelector(".group-name-static")?.textContent === "Native fixture",
+  );
+  [...section.querySelectorAll("button")]
+    .find((b) => b.textContent === "Open group")
+    .click();
+});
+await mgr3.waitForFunction(() =>
+  [...document.querySelectorAll(".group-name")].some(
+    (i) => i.value === "Native fixture",
+  ),
+);
+check("native saved group reopens as a live group", true);
+await mgr3.close();
 
 check("no uncaught page errors", errors.length === 0);
 if (errors.length) console.log("PAGE ERRORS:", errors);

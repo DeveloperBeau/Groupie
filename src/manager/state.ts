@@ -21,7 +21,7 @@ export interface ManagerState {
   tabs: Tab[];
   groups: Map<number, TabGroup>;
   selected: Set<number>;
-  remembered: RememberedGroup[];
+  saved: import("./group-store").DisplayedSavedGroup[];
   view: "list" | "grid";
   gridGroupId: number | null;
 }
@@ -31,7 +31,7 @@ export function createState(): ManagerState {
     tabs: [],
     groups: new Map(),
     selected: new Set(),
-    remembered: [],
+    saved: [],
     view: "list",
     gridGroupId: null,
   };

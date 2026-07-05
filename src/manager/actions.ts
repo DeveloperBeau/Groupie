@@ -2,7 +2,7 @@
 // without a DOM or a real Chrome API.
 
 import type { TabsApi } from "./tabs-api";
-import type { ManagerState, RememberedGroup } from "./state";
+import type { ManagerState } from "./state";
 import { selectedTabs } from "./state";
 import { tabCountLabel } from "./format";
 
@@ -16,12 +16,18 @@ export interface GroupResult {
   grouped: boolean;
 }
 
+export interface ReopenableGroup {
+  title: string;
+  color: `${chrome.tabGroups.Color}`;
+  urls: string[];
+}
+
 export interface Actions {
   closeTabs(tabIds: number[]): Promise<void>;
   activateTab(tab: chrome.tabs.Tab): Promise<void>;
   renameGroup(groupId: number, title: string): Promise<void>;
   groupSelected(name: string): Promise<GroupResult>;
-  reopenGroup(remembered: RememberedGroup): Promise<void>;
+  reopenGroup(group: ReopenableGroup): Promise<void>;
 }
 
 export function createActions(
@@ -124,7 +130,7 @@ export function createActions(
 
   // Recreate a remembered group: open its tabs (unfocused) in this window,
   // group them, and restore the title and color.
-  async function reopenGroup(remembered: RememberedGroup): Promise<void> {
+  async function reopenGroup(remembered: ReopenableGroup): Promise<void> {
     try {
       const tabIds: number[] = [];
       for (const url of remembered.urls) {

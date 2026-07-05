@@ -1,19 +1,19 @@
-// "Saved groups" section: groups Groupie has seen open that aren't open in
-// this session. Chrome has no API for its own saved-group store, so these
-// come from Groupie's snapshots in chrome.storage.local.
+// "Saved groups" section: Chrome's own saved groups (when the optional
+// native host is installed) plus groups Groupie has snapshotted itself,
+// excluding anything currently open.
 
-import type { RememberedGroup } from "../state";
+import type { DisplayedSavedGroup } from "../group-store";
 import { hostSummary, tabCountLabel } from "../format";
 import { colorHex } from "./shared";
 
 export interface RememberedHandlers {
-  reopenGroup(group: RememberedGroup): void;
-  forgetGroup(group: RememberedGroup): void;
+  reopenGroup(group: DisplayedSavedGroup): void;
+  forgetGroup(group: DisplayedSavedGroup): void;
 }
 
 export function renderRemembered(
   container: HTMLElement,
-  remembered: RememberedGroup[],
+  saved: DisplayedSavedGroup[],
   handlers: RememberedHandlers,
 ): void {
   container.textContent = "";
@@ -24,25 +24,25 @@ export function renderRemembered(
   label.textContent = "Saved groups (not open)";
   container.appendChild(label);
 
-  if (remembered.length === 0) {
+  if (saved.length === 0) {
     const hint = document.createElement("p");
     hint.className = "remembered-hint";
     hint.textContent =
-      "Chrome doesn't let extensions read its saved tab groups, so Groupie " +
-      "can't see groups that haven't been open since it was installed. Open " +
-      "a saved group once (click its chip in Chrome's tab strip) and Groupie " +
-      "will remember it here, ready to reopen any time.";
+      "Chrome doesn't let extensions read its saved tab groups. Open a " +
+      "saved group once (click its chip in Chrome's tab strip) and Groupie " +
+      "will remember it here — or install the optional native helper " +
+      "(see the README) to list all of Chrome's saved groups automatically.";
     container.appendChild(hint);
     return;
   }
 
-  for (const group of remembered) {
-    container.appendChild(renderRememberedGroup(group, handlers));
+  for (const group of saved) {
+    container.appendChild(renderSavedGroup(group, handlers));
   }
 }
 
-function renderRememberedGroup(
-  group: RememberedGroup,
+function renderSavedGroup(
+  group: DisplayedSavedGroup,
   handlers: RememberedHandlers,
 ): HTMLElement {
   const section = document.createElement("section");
@@ -73,6 +73,14 @@ function renderRememberedGroup(
   hosts.title = group.urls.join("\n");
   head.appendChild(hosts);
 
+  if (group.source === "chrome") {
+    const badge = document.createElement("span");
+    badge.className = "source-badge";
+    badge.textContent = "from Chrome";
+    badge.title = "Read from Chrome's saved-groups store by the native helper";
+    head.appendChild(badge);
+  }
+
   const actions = document.createElement("div");
   actions.className = "group-head-actions";
 
@@ -82,12 +90,14 @@ function renderRememberedGroup(
   openBtn.addEventListener("click", () => handlers.reopenGroup(group));
   actions.appendChild(openBtn);
 
-  const forgetBtn = document.createElement("button");
-  forgetBtn.className = "btn btn-ghost";
-  forgetBtn.textContent = "Forget";
-  forgetBtn.title = "Remove from Groupie's saved groups";
-  forgetBtn.addEventListener("click", () => handlers.forgetGroup(group));
-  actions.appendChild(forgetBtn);
+  if (group.source === "groupie") {
+    const forgetBtn = document.createElement("button");
+    forgetBtn.className = "btn btn-ghost";
+    forgetBtn.textContent = "Forget";
+    forgetBtn.title = "Remove from Groupie's saved groups";
+    forgetBtn.addEventListener("click", () => handlers.forgetGroup(group));
+    actions.appendChild(forgetBtn);
+  }
 
   head.appendChild(actions);
   section.appendChild(head);

@@ -466,6 +466,18 @@ body {
   color: var(--text-dim);
 }
 
+.source-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 .remembered-hosts {
   overflow: hidden;
   text-overflow: ellipsis;

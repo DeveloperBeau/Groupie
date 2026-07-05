@@ -91,3 +91,30 @@ bunx playwright install chromium
 
 CI (GitHub Actions) runs lint, format check, typecheck, unit tests, the build,
 and the e2e smoke test on every pull request.
+
+## Seeing Chrome's saved groups (optional native helper)
+
+Chrome gives extensions no API for saved-but-inactive tab groups (tracked in
+[w3c/webextensions#715](https://github.com/w3c/webextensions/issues/715)).
+Without help, Groupie only remembers groups it has seen open. The optional
+native messaging helper closes that gap by reading the saved-groups store in
+your Chrome profile (`Sync Data/LevelDB`) and listing every saved group, shown
+with a "from Chrome" badge:
+
+```bash
+bun scripts/install-native-host.mjs   # pass an extension id to override the default
+```
+
+The installer compiles a self-contained binary to
+`~/Library/Application Support/Groupie/groupie-native-host` and registers it in
+`~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`. Delete
+those two paths to uninstall. Notes:
+
+- macOS-only as written; the profile defaults to `Default` (create
+  `~/Library/Application Support/Groupie/config.json` with `{"profile": "..."}`
+  to override).
+- This reads undocumented Chrome internals; a future Chrome version may change
+  the format. Groupie degrades gracefully: if the helper is missing or returns
+  nothing, the seeding behavior still works.
+- Profiles with a sync passphrase encrypt this data; the helper will simply
+  find no groups.
