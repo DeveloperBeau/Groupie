@@ -55,9 +55,7 @@ check(
 );
 
 await mgr.locator("#selection-bar .checkbox").click();
-await mgr.waitForFunction(
-  () => document.querySelector("#select-all")?.checked,
-);
+await mgr.waitForFunction(() => document.querySelector("#select-all")?.checked);
 check(
   "select-all selects every tab",
   (await mgr.locator("#selection-count").textContent()).trim() ===
@@ -115,7 +113,10 @@ await mgr.evaluate(() => {
   section.querySelector(".group-head-actions .btn").click();
 });
 await mgr.waitForSelector("#grid-view:not([hidden])");
-check("grid view shows tab cards", (await mgr.locator(".tab-card").count()) >= 2);
+check(
+  "grid view shows tab cards",
+  (await mgr.locator(".tab-card").count()) >= 2,
+);
 check(
   "grid title reflects group name",
   (await mgr.locator("#grid-group-name").textContent()).trim() ===
@@ -124,7 +125,10 @@ check(
 
 await mgr.locator("#back-btn").click();
 await mgr.waitForSelector("#list-view:not([hidden])");
-check("back button returns to list", await mgr.locator("#grid-view").isHidden());
+check(
+  "back button returns to list",
+  await mgr.locator("#grid-view").isHidden(),
+);
 
 // --- Pinned tabs are excluded from grouping ---
 await mgr.evaluate(async () => {
@@ -174,7 +178,10 @@ await mgr.waitForFunction(
   (b) => document.querySelectorAll(".tab-row").length < b,
   before,
 );
-check("delete removes tab rows", (await mgr.locator(".tab-row").count()) < before);
+check(
+  "delete removes tab rows",
+  (await mgr.locator(".tab-row").count()) < before,
+);
 await mgr.waitForSelector("#empty-state:not([hidden])");
 check("empty state appears once every tab is closed", true);
 

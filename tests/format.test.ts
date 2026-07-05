@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { buildFaviconUrl, prettyUrl, tabCountLabel } from "../src/manager/format";
+import {
+  buildFaviconUrl,
+  prettyUrl,
+  tabCountLabel,
+} from "../src/manager/format";
 
 describe("prettyUrl", () => {
   it("returns empty string for missing url", () => {

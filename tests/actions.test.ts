@@ -5,7 +5,10 @@ import type { TabsApi } from "../src/manager/tabs-api";
 
 function tab(
   id: number,
-  { windowId = 1, pinned = false }: { windowId?: number; pinned?: boolean } = {},
+  {
+    windowId = 1,
+    pinned = false,
+  }: { windowId?: number; pinned?: boolean } = {},
 ): Tab {
   return { id, windowId, pinned, groupId: -1 } as Tab;
 }
@@ -26,7 +29,11 @@ function fakeApi(overrides: Partial<TabsApi> = {}): TabsApi {
 function setup(
   state: ManagerState,
   apiOverrides: Partial<TabsApi> = {},
-): { deps: ActionDeps; notify: ReturnType<typeof vi.fn>; reload: ReturnType<typeof vi.fn> } {
+): {
+  deps: ActionDeps;
+  notify: ReturnType<typeof vi.fn>;
+  reload: ReturnType<typeof vi.fn>;
+} {
   const notify = vi.fn();
   const reload = vi.fn().mockResolvedValue(undefined);
   const deps = { tabsApi: fakeApi(apiOverrides), notify, reload };
@@ -78,7 +85,9 @@ describe("closeTabs", () => {
 describe("renameGroup", () => {
   function stateWithGroup(id: number, title: string): ManagerState {
     const state = createState();
-    state.groups = new Map([[id, { id, title, color: "blue" } as chrome.tabGroups.TabGroup]]);
+    state.groups = new Map([
+      [id, { id, title, color: "blue" } as chrome.tabGroups.TabGroup],
+    ]);
     return state;
   }
 
@@ -145,7 +154,10 @@ describe("groupSelected", () => {
     const state = createState();
     state.tabs = [tab(1, { windowId: 1 }), tab(2, { windowId: 2 })];
     state.selected = new Set([1, 2]);
-    const groupTabs = vi.fn().mockResolvedValueOnce(100).mockResolvedValueOnce(200);
+    const groupTabs = vi
+      .fn()
+      .mockResolvedValueOnce(100)
+      .mockResolvedValueOnce(200);
     const { deps, notify } = setup(state, { groupTabs });
     const actions = createActions(state, deps);
 
@@ -169,7 +181,9 @@ describe("groupSelected", () => {
 
     expect(result.grouped).toBe(true);
     expect(deps.tabsApi.groupTabs).toHaveBeenCalledWith([2, 3]);
-    expect(notify).toHaveBeenCalledWith("Grouped 2 tabs. Skipped 1 pinned tab.");
+    expect(notify).toHaveBeenCalledWith(
+      "Grouped 2 tabs. Skipped 1 pinned tab.",
+    );
   });
 
   it("no-ops and preserves the selection when every selected tab is pinned", async () => {

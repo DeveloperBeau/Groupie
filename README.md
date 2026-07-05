@@ -10,8 +10,8 @@ and jump into a grid view of any group.
 ## Features (V1)
 
 - **See everything.** One page lists all open tabs across every window,
-  organized by their Chrome tab group (plus an *Ungrouped* section).
-- **Select one or many.** Per-tab checkboxes, plus a *select all* toggle.
+  organized by their Chrome tab group (plus an _Ungrouped_ section).
+- **Select one or many.** Per-tab checkboxes, plus a _select all_ toggle.
 - **Delete.** Close the selected tabs in a single click (or the `✕` on any row).
 - **Group and rename.** Drop the selected tabs into a new named group, and
   rename any existing group inline (click its name, type, press Enter).
@@ -47,13 +47,13 @@ Groupie is a plain Manifest V3 extension with no build step.
 
 ## Project layout
 
-| File | Purpose |
-| --- | --- |
-| `manifest.json` | MV3 manifest (permissions: `tabs`, `tabGroups`). |
-| `background.js` | Service worker; opens/focuses the manager tab on icon click. |
-| `manager.html` / `manager.css` / `manager.js` | The full-page manager UI. |
-| `icons/` | Toolbar/store icons (generated). |
-| `scripts/` | Dev helpers (icon generation, tests). |
+| File                                          | Purpose                                                      |
+| --------------------------------------------- | ------------------------------------------------------------ |
+| `manifest.json`                               | MV3 manifest (permissions: `tabs`, `tabGroups`).             |
+| `background.js`                               | Service worker; opens/focuses the manager tab on icon click. |
+| `manager.html` / `manager.css` / `manager.js` | The full-page manager UI.                                    |
+| `icons/`                                      | Toolbar/store icons (generated).                             |
+| `scripts/`                                    | Dev helpers (icon generation, tests).                        |
 
 ## Development
 
