@@ -1,7 +1,12 @@
 // List view: tabs sectioned by group, with selection and inline rename.
 
 import type { ManagerState, Tab } from "../state";
-import { TAB_GROUP_ID_NONE, bucketByGroup, orderedGroupIds } from "../state";
+import {
+  TAB_GROUP_ID_NONE,
+  bucketByGroup,
+  orderedGroupIds,
+  tabIds,
+} from "../state";
 import { prettyUrl, tabCountLabel } from "../format";
 import { createCloseButton, createFavicon, groupColor } from "./shared";
 
@@ -15,6 +20,7 @@ export interface ListEls {
 
 export interface ListHandlers {
   toggleSelect(tabId: number, selected: boolean): void;
+  setSelection(tabIds: number[], selected: boolean): void;
   activateTab(tab: Tab): void;
   closeTab(tabId: number): void;
   openGrid(groupId: number): void;
@@ -68,6 +74,25 @@ function renderGroupSection(
 
   const head = document.createElement("div");
   head.className = "group-head";
+
+  // Select-all-in-group checkbox.
+  const ids = tabIds(tabs);
+  const selectedCount = ids.filter((id) => state.selected.has(id)).length;
+  const groupSelect = document.createElement("label");
+  groupSelect.className = "checkbox";
+  groupSelect.title = "Select all tabs in this group";
+  const groupSelectInput = document.createElement("input");
+  groupSelectInput.type = "checkbox";
+  groupSelectInput.checked = ids.length > 0 && selectedCount === ids.length;
+  groupSelectInput.indeterminate =
+    selectedCount > 0 && selectedCount < ids.length;
+  groupSelectInput.addEventListener("change", () => {
+    handlers.setSelection(ids, groupSelectInput.checked);
+  });
+  const groupSelectBox = document.createElement("span");
+  groupSelect.appendChild(groupSelectInput);
+  groupSelect.appendChild(groupSelectBox);
+  head.appendChild(groupSelect);
 
   const dot = document.createElement("span");
   dot.className = "group-dot";

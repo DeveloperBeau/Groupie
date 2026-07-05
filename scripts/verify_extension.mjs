@@ -88,6 +88,37 @@ check(
   (await mgr.locator("#new-group-name").inputValue()) === "",
 );
 
+// --- Per-group and all-groups selection ---
+const groupHeadCheckbox = mgr.locator(".group-head .checkbox").first();
+await groupHeadCheckbox.click();
+await mgr.waitForSelector("#selection-bar:not([hidden])");
+check(
+  "group header checkbox selects the whole group",
+  (await mgr.locator("#selection-count").textContent()).trim() === "2 selected",
+);
+await groupHeadCheckbox.click();
+check(
+  "group header checkbox deselects the group",
+  await mgr.locator("#selection-bar").isHidden(),
+);
+
+await mgr.locator("#select-groups-btn").click();
+await mgr.waitForSelector("#selection-bar:not([hidden])");
+check(
+  "select-all-groups selects every grouped tab",
+  (await mgr.locator("#selection-count").textContent()).trim() === "2 selected",
+);
+check(
+  "select-all-groups button flips to deselect",
+  (await mgr.locator("#select-groups-btn").textContent()).trim() ===
+    "Deselect all groups",
+);
+await mgr.locator("#select-groups-btn").click();
+check(
+  "deselect-all-groups clears the selection",
+  await mgr.locator("#selection-bar").isHidden(),
+);
+
 // --- Rename: commit via Enter ---
 const groupName = mgr.locator(".group-name:not([disabled])").first();
 await groupName.fill("Renamed group");

@@ -65,3 +65,26 @@ export function tabsInGroup(tabs: Tab[], groupId: number): Tab[] {
 export function selectedTabs(state: ManagerState): Tab[] {
   return state.tabs.filter((t) => t.id != null && state.selected.has(t.id));
 }
+
+export function tabIds(tabs: Tab[]): number[] {
+  return tabs.flatMap((t) => (t.id == null ? [] : [t.id]));
+}
+
+// Ids of every tab that belongs to a group.
+export function groupedTabIds(tabs: Tab[]): number[] {
+  return tabIds(tabs.filter((t) => groupIdOf(t) !== TAB_GROUP_ID_NONE));
+}
+
+export function allIdsSelected(selected: Set<number>, ids: number[]): boolean {
+  return ids.length > 0 && ids.every((id) => selected.has(id));
+}
+
+// Toggle a block of ids: deselect them all if every one is selected,
+// otherwise select them all.
+export function toggleIdSet(selected: Set<number>, ids: number[]): void {
+  if (allIdsSelected(selected, ids)) {
+    for (const id of ids) selected.delete(id);
+  } else {
+    for (const id of ids) selected.add(id);
+  }
+}

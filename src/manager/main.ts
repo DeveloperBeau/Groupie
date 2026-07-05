@@ -1,6 +1,12 @@
 // Manager page bootstrap: element caching, data loading, and event wiring.
 
-import { createState, pruneSelection } from "./state";
+import {
+  allIdsSelected,
+  createState,
+  groupedTabIds,
+  pruneSelection,
+  toggleIdSet,
+} from "./state";
 import { chromeTabsApi } from "./tabs-api";
 import { createActions } from "./actions";
 import { renderList } from "./render/list";
@@ -17,6 +23,7 @@ function el<T extends HTMLElement>(id: string): T {
 document.addEventListener("DOMContentLoaded", () => {
   const els = {
     tabCount: el("tab-count"),
+    selectGroupsBtn: el<HTMLButtonElement>("select-groups-btn"),
     refreshBtn: el<HTMLButtonElement>("refresh-btn"),
     listView: el("list-view"),
     gridView: el("grid-view"),
@@ -70,6 +77,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function render(): void {
     els.tabCount.textContent = tabCountLabel(state.tabs.length);
 
+    const grouped = groupedTabIds(state.tabs);
+    els.selectGroupsBtn.hidden = state.view === "grid" || grouped.length === 0;
+    els.selectGroupsBtn.textContent = allIdsSelected(state.selected, grouped)
+      ? "Deselect all groups"
+      : "Select all groups";
+
     if (state.view === "grid") {
       els.listView.hidden = true;
       els.gridView.hidden = false;
@@ -109,8 +122,17 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
 
+  function setSelection(tabIds: number[], selected: boolean): void {
+    for (const id of tabIds) {
+      if (selected) state.selected.add(id);
+      else state.selected.delete(id);
+    }
+    render();
+  }
+
   const listHandlers = {
     toggleSelect,
+    setSelection,
     activateTab: (tab: chrome.tabs.Tab) => void actions.activateTab(tab),
     closeTab: (tabId: number) => void actions.closeTabs([tabId]),
     openGrid,
@@ -152,6 +174,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function attachEvents(): void {
     els.refreshBtn.addEventListener("click", () => void loadData());
+    els.selectGroupsBtn.addEventListener("click", () => {
+      toggleIdSet(state.selected, groupedTabIds(state.tabs));
+      render();
+    });
     els.selectAll.addEventListener("change", () =>
       toggleSelectAll(els.selectAll.checked),
     );
