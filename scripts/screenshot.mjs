@@ -33,6 +33,8 @@ await mgr.waitForFunction(() =>
     (i) => i.value === "Cowork research",
   ),
 );
+// Let the confirmation toast fade before capturing.
+await mgr.waitForSelector("#toast[hidden]", { state: "attached" });
 await mgr.screenshot({ path: path.join(outDir, "list-view.png") });
 
 // Grid view of the group.

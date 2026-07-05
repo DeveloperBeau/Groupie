@@ -40,6 +40,12 @@ export async function launchWithExtension({ seedUrls = [], viewport } = {}) {
       .catch(() => {});
   }
 
+  // Drop the context's initial about:blank page so it doesn't pollute the
+  // manager's tab list.
+  for (const page of ctx.pages()) {
+    if (page.url() === "about:blank") await page.close().catch(() => {});
+  }
+
   // onPageError must be attached before navigation so boot-time exceptions
   // are captured too.
   async function openManager({ onPageError } = {}) {

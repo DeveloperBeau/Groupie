@@ -23,11 +23,18 @@ and jump into a grid view of any group.
 
 ## Install (load unpacked)
 
-Groupie is a plain Manifest V3 extension with no build step.
+Groupie is a Manifest V3 extension written in TypeScript and built with
+[Bun](https://bun.sh):
+
+```bash
+bun install
+bun run build
+```
 
 1. Open `chrome://extensions` in Chrome (or any Chromium browser).
 2. Turn on **Developer mode** (top-right).
-3. Click **Load unpacked** and select this repository's folder.
+3. Click **Load unpacked** and select this repository's `dist/` folder
+   (not the repository root).
 4. Pin the Groupie icon, then click it to open the tab manager.
 
 ## Usage
@@ -47,31 +54,37 @@ Groupie is a plain Manifest V3 extension with no build step.
 
 ## Project layout
 
-| File                                          | Purpose                                                      |
-| --------------------------------------------- | ------------------------------------------------------------ |
-| `manifest.json`                               | MV3 manifest (permissions: `tabs`, `tabGroups`).             |
-| `background.js`                               | Service worker; opens/focuses the manager tab on icon click. |
-| `manager.html` / `manager.css` / `manager.js` | The full-page manager UI.                                    |
-| `icons/`                                      | Toolbar/store icons (generated).                             |
-| `scripts/`                                    | Dev helpers (icon generation, tests).                        |
+| Path                           | Purpose                                                          |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `manifest.json`                | MV3 manifest (permissions: `tabs`, `tabGroups`, `favicon`).      |
+| `src/background.ts`            | Service worker; opens/focuses the manager tab on icon click.     |
+| `src/manager/`                 | Manager page modules: state, actions, Chrome adapter, renderers. |
+| `manager.html` / `manager.css` | The manager page shell and styles.                               |
+| `icons/`                       | Toolbar/store icons (generated).                                 |
+| `scripts/`                     | Build, icon generation, e2e test, and screenshot helpers.        |
+| `tests/`                       | Unit tests (`bun test`), including fuzz cases via fast-check.    |
+| `dist/`                        | Build output; this is the folder Chrome loads.                   |
 
 ## Development
 
-Regenerate the icons:
+Everything runs through Bun scripts:
 
 ```bash
-python3 scripts/make_icons.py
+bun run build        # bundle src/ + copy static assets into dist/
+bun run watch        # rebuild on change
+bun run lint         # ESLint
+bun run typecheck    # tsc --noEmit
+bun test             # unit tests (with fast-check fuzzing)
+bun run test:e2e     # build, then drive the extension in Chromium via Playwright
+bun run screenshots  # regenerate the README screenshots
+bun run icons        # regenerate the PNG icons (python3)
 ```
 
-Run the end-to-end smoke test (loads the extension in Chromium and drives the
-core flows). Requires Playwright's Chromium:
+The e2e test needs Playwright's Chromium once:
 
 ```bash
-node scripts/verify_extension.mjs
+bunx playwright install chromium
 ```
 
-Regenerate the README screenshots:
-
-```bash
-node scripts/screenshot.mjs
-```
+CI (GitHub Actions) runs lint, format check, typecheck, unit tests, the build,
+and the e2e smoke test on every pull request.
