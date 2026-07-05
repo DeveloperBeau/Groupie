@@ -15,7 +15,7 @@ const seed = [
   "https://www.iana.org/help/example-domains",
 ];
 
-const { ctx, extId, openManager, cleanup } = await launchWithExtension({
+const { ctx, extId, worker, openManager, cleanup } = await launchWithExtension({
   seedUrls: seed,
 });
 console.log("extension id:", extId);
@@ -293,6 +293,47 @@ check(
 );
 await mgr.waitForSelector("#empty-state:not([hidden])");
 check("empty state appears once every tab is closed", true);
+
+// --- Background capture: groups are remembered with the manager closed ---
+await mgr.close();
+await worker.evaluate(async () => {
+  // All pages are closed at this point, so bring our own window.
+  const win = await chrome.windows.create({
+    url: "https://example.com/",
+    focused: false,
+  });
+  const t1 = win.tabs[0];
+  const t2 = await chrome.tabs.create({
+    windowId: win.id,
+    url: "https://example.org/",
+    active: false,
+  });
+  const gid = await chrome.tabs.group({ tabIds: [t1.id, t2.id] });
+  await chrome.tabGroups.update(gid, {
+    title: "Background capture",
+    color: "green",
+  });
+});
+// Give the pages time to commit their urls and the worker's debounced
+// snapshot time to run, then close the group with the manager still closed.
+await new Promise((r) => setTimeout(r, 2000));
+await worker.evaluate(async () => {
+  const [group] = await chrome.tabGroups.query({ title: "Background capture" });
+  const tabs = await chrome.tabs.query({ groupId: group.id });
+  await chrome.tabs.remove(tabs.map((t) => t.id));
+});
+
+const mgr2 = await openManager();
+await mgr2.waitForSelector(".remembered-group");
+check(
+  "group opened and closed while the manager was shut is still remembered",
+  await mgr2.evaluate(() =>
+    [...document.querySelectorAll(".remembered-group .group-name-static")].some(
+      (el) => el.textContent === "Background capture",
+    ),
+  ),
+);
+await mgr2.close();
 
 check("no uncaught page errors", errors.length === 0);
 if (errors.length) console.log("PAGE ERRORS:", errors);

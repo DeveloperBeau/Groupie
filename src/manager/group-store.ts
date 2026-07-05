@@ -7,11 +7,24 @@ import { bucketByGroup } from "./state";
 const STORAGE_KEY = "rememberedGroups";
 export const MAX_REMEMBERED = 100;
 
+// FNV-1a 32-bit over the sorted url list, so the fingerprint is stable when
+// tabs merely reorder.
+function urlFingerprint(urls: string[]): string {
+  const input = [...urls].sort().join("\n");
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(36);
+}
+
 // Group ids are session-scoped, so remembered entries are keyed by color +
-// title. Untitled groups of the same color collapse into one entry; that is
-// an accepted trade-off of the heuristic.
-export function groupKey(color: string, title: string): string {
-  return `${color}:${title}`;
+// title + a fingerprint of their tab urls. The fingerprint keeps groups that
+// share a name and color (common with automated naming) from overwriting
+// each other.
+export function groupKey(color: string, title: string, urls: string[]): string {
+  return `${color}:${title}:${urlFingerprint(urls)}`;
 }
 
 export interface OpenGroupSnapshot {
@@ -50,8 +63,8 @@ export function syncRemembered(
 ): SyncResult {
   const openKeyById = new Map<number, string>();
   const openKeys = new Set<string>();
-  for (const { group } of open) {
-    const key = groupKey(group.color, group.title ?? "");
+  for (const { group, urls } of open) {
+    const key = groupKey(group.color, group.title ?? "", urls);
     openKeyById.set(group.id, key);
     openKeys.add(key);
   }
@@ -64,7 +77,7 @@ export function syncRemembered(
   }
 
   for (const { group, urls } of open) {
-    const key = groupKey(group.color, group.title ?? "");
+    const key = groupKey(group.color, group.title ?? "", urls);
     byKey.set(key, {
       key,
       title: group.title ?? "",

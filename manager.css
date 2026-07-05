@@ -466,6 +466,13 @@ body {
   color: var(--text-dim);
 }
 
+.remembered-hosts {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 340px;
+}
+
 .remembered-hint {
   margin: 10px 0 0;
   font-size: 12px;

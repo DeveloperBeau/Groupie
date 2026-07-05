@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import fc from "fast-check";
 import {
   buildFaviconUrl,
+  hostSummary,
   prettyUrl,
   tabCountLabel,
 } from "../src/manager/format";
@@ -76,6 +77,38 @@ describe("buildFaviconUrl", () => {
       fc.property(fc.webUrl({ withQueryParameters: true }), (page) => {
         const result = buildFaviconUrl(base, page);
         expect(new URL(result ?? "").searchParams.get("pageUrl")).toBe(page);
+      }),
+    );
+  });
+});
+
+describe("hostSummary", () => {
+  it("lists unique hostnames", () => {
+    expect(
+      hostSummary(["https://a.test/x", "https://a.test/y", "https://b.test/"]),
+    ).toBe("a.test, b.test");
+  });
+
+  it("truncates past the max with a +N suffix", () => {
+    expect(
+      hostSummary([
+        "https://a.test/",
+        "https://b.test/",
+        "https://c.test/",
+        "https://d.test/",
+        "https://e.test/",
+      ]),
+    ).toBe("a.test, b.test, c.test +2");
+  });
+
+  it("falls back to the raw string for unparseable urls", () => {
+    expect(hostSummary(["not a url"])).toBe("not a url");
+  });
+
+  it("never throws (fuzz)", () => {
+    fc.assert(
+      fc.property(fc.array(fc.string(), { maxLength: 10 }), (urls) => {
+        expect(typeof hostSummary(urls)).toBe("string");
       }),
     );
   });

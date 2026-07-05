@@ -3,7 +3,7 @@
 // come from Groupie's snapshots in chrome.storage.local.
 
 import type { RememberedGroup } from "../state";
-import { tabCountLabel } from "../format";
+import { hostSummary, tabCountLabel } from "../format";
 import { colorHex } from "./shared";
 
 export interface RememberedHandlers {
@@ -65,6 +65,13 @@ function renderRememberedGroup(
   meta.className = "group-meta";
   meta.textContent = tabCountLabel(group.urls.length);
   head.appendChild(meta);
+
+  // Groups often share a name and color; the hosts tell them apart.
+  const hosts = document.createElement("span");
+  hosts.className = "group-meta remembered-hosts";
+  hosts.textContent = hostSummary(group.urls);
+  hosts.title = group.urls.join("\n");
+  head.appendChild(hosts);
 
   const actions = document.createElement("div");
   actions.className = "group-head-actions";
