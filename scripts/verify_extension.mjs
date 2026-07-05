@@ -201,6 +201,60 @@ check(
   (await mgr.locator("#new-group-name").inputValue()) === "Pins",
 );
 
+// --- Saved groups: a closed group is remembered and can be reopened ---
+await mgr.evaluate(async () => {
+  const [group] = await chrome.tabGroups.query({ title: "Mixed" });
+  const tabs = await chrome.tabs.query({ groupId: group.id });
+  await chrome.tabs.remove(tabs.map((t) => t.id));
+});
+await mgr.waitForSelector(".remembered-group");
+check(
+  "closed group appears under saved groups",
+  await mgr.evaluate(() =>
+    [...document.querySelectorAll(".remembered-group .group-name-static")].some(
+      (el) => el.textContent === "Mixed",
+    ),
+  ),
+);
+
+await mgr.evaluate(() => {
+  const section = [...document.querySelectorAll(".remembered-group")].find(
+    (s) => s.querySelector(".group-name-static")?.textContent === "Mixed",
+  );
+  [...section.querySelectorAll("button")]
+    .find((b) => b.textContent === "Open group")
+    .click();
+});
+await groupNamed("Mixed");
+check("saved group reopens as a live group", true);
+await mgr.waitForFunction(
+  () => document.querySelector("#remembered-container")?.hidden,
+);
+check("reopened group leaves the saved section", true);
+
+// --- Saved groups: forget removes the entry ---
+await mgr.evaluate(async () => {
+  const [group] = await chrome.tabGroups.query({ title: "Mixed" });
+  const tabs = await chrome.tabs.query({ groupId: group.id });
+  await chrome.tabs.remove(tabs.map((t) => t.id));
+});
+await mgr.waitForSelector(".remembered-group");
+await mgr.evaluate(() => {
+  const section = [...document.querySelectorAll(".remembered-group")].find(
+    (s) => s.querySelector(".group-name-static")?.textContent === "Mixed",
+  );
+  [...section.querySelectorAll("button")]
+    .find((b) => b.textContent === "Forget")
+    .click();
+});
+await mgr.waitForFunction(
+  () =>
+    ![
+      ...document.querySelectorAll(".remembered-group .group-name-static"),
+    ].some((el) => el.textContent === "Mixed"),
+);
+check("forget removes the saved group entry", true);
+
 // --- Delete everything -> empty state ---
 const before = await mgr.locator(".tab-row").count();
 await mgr.locator("#selection-bar .checkbox").click();

@@ -9,10 +9,19 @@ import {
 } from "./state";
 import { chromeTabsApi } from "./tabs-api";
 import { createActions } from "./actions";
+import {
+  forgetRemembered,
+  loadRemembered,
+  saveRemembered,
+  snapshotOpenGroups,
+  syncRemembered,
+} from "./group-store";
 import { renderList } from "./render/list";
 import { renderGrid } from "./render/grid";
+import { renderRemembered } from "./render/remembered";
 import { createToaster } from "./render/shared";
 import { tabCountLabel } from "./format";
+import type { RememberedGroup } from "./state";
 
 function el<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);
@@ -34,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     groupBtn: el<HTMLButtonElement>("group-btn"),
     deleteBtn: el<HTMLButtonElement>("delete-btn"),
     groupsContainer: el("groups-container"),
+    rememberedContainer: el("remembered-container"),
     emptyState: el("empty-state"),
     backBtn: el<HTMLButtonElement>("back-btn"),
     gridGroupDot: el("grid-group-dot"),
@@ -65,6 +75,17 @@ document.addEventListener("DOMContentLoaded", () => {
     state.groups = new Map(groups.map((g) => [g.id, g]));
     pruneSelection(state.selected, state.tabs);
 
+    // Snapshot open groups so they stay reachable after Chrome closes them.
+    const stored = await loadRemembered();
+    const { all, notOpen } = syncRemembered(
+      stored,
+      snapshotOpenGroups(state.tabs, state.groups),
+      Date.now(),
+    );
+    await saveRemembered(all);
+    if (seq !== loadSeq) return;
+    state.remembered = notOpen;
+
     render();
   }
 
@@ -91,6 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
       els.gridView.hidden = true;
       els.listView.hidden = false;
       renderList(state, els, listHandlers);
+      renderRemembered(els.rememberedContainer, state.remembered, {
+        reopenGroup: (group: RememberedGroup) =>
+          void actions.reopenGroup(group),
+        forgetGroup: (group: RememberedGroup) =>
+          void forgetRemembered(group.key).then(loadData),
+      });
     }
   }
 

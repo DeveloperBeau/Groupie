@@ -18,6 +18,9 @@ and jump into a grid view of any group.
 - **Show tabs in group.** Open any group in a grid view; click a tile to jump
   straight to that tab, or `✕` to close it.
 - **Live.** The manager refreshes as tabs open, close, and move.
+- **Saved groups.** Groupie remembers every group it has seen open (Chrome
+  gives extensions no way to read its own saved-groups store), lists the ones
+  not open in this session, and can reopen or forget them.
 
 ![Grid view](docs/grid-view.png)
 

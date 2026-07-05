@@ -445,6 +445,27 @@ body {
   color: var(--text-faint);
 }
 
+/* ---------- Saved (remembered) groups ---------- */
+.section-label {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.remembered-container {
+  margin-top: 26px;
+}
+
+.group-name-static {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 8px;
+  color: var(--text-dim);
+}
+
 /* ---------- Empty state ---------- */
 .empty-state {
   text-align: center;

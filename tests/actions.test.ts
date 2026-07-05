@@ -1,6 +1,11 @@
 import { describe, expect, it, mock, spyOn } from "bun:test";
 import { createActions, type ActionDeps } from "../src/manager/actions";
-import { createState, type ManagerState, type Tab } from "../src/manager/state";
+import {
+  createState,
+  type ManagerState,
+  type RememberedGroup,
+  type Tab,
+} from "../src/manager/state";
 import type { TabsApi } from "../src/manager/tabs-api";
 
 function tab(
@@ -17,6 +22,7 @@ function fakeApi(overrides: Partial<TabsApi> = {}): TabsApi {
   return {
     queryTabs: mock(() => Promise.resolve([])),
     queryGroups: mock(() => Promise.resolve([])),
+    createTab: mock(() => Promise.resolve(1)),
     removeTabs: mock(() => Promise.resolve()),
     activateTab: mock(() => Promise.resolve()),
     focusWindow: mock(() => Promise.resolve()),
@@ -222,5 +228,64 @@ describe("groupSelected", () => {
 
     expect(result.grouped).toBe(false);
     expect(notify).not.toHaveBeenCalled();
+  });
+});
+
+describe("reopenGroup", () => {
+  const saved: RememberedGroup = {
+    key: "blue:Research",
+    title: "Research",
+    color: "blue",
+    urls: ["https://a.test/", "https://b.test/"],
+    lastGroupId: 7,
+    lastSeen: 0,
+  };
+
+  it("opens the urls, groups them, and restores title and color", async () => {
+    const state = createState();
+    const createTab = mock(() => Promise.resolve(0))
+      .mockResolvedValueOnce(11)
+      .mockResolvedValueOnce(12);
+    const { deps, notify, reload } = setup(state, { createTab });
+    const actions = createActions(state, deps);
+
+    await actions.reopenGroup(saved);
+
+    expect(createTab).toHaveBeenCalledTimes(2);
+    expect(deps.tabsApi.groupTabs).toHaveBeenCalledWith([11, 12]);
+    expect(deps.tabsApi.updateGroup).toHaveBeenCalledWith(100, {
+      title: "Research",
+      color: "blue",
+    });
+    expect(notify).toHaveBeenCalledWith("Reopened “Research” with 2 tabs.");
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("notifies without grouping when no tab could be created", async () => {
+    const state = createState();
+    const { deps, notify, reload } = setup(state, {
+      createTab: mock(() => Promise.resolve(undefined)),
+    });
+    const actions = createActions(state, deps);
+
+    await actions.reopenGroup(saved);
+
+    expect(deps.tabsApi.groupTabs).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith("Couldn't reopen that group.");
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("notifies and reloads when grouping fails", async () => {
+    const state = createState();
+    const { deps, notify, reload } = setup(state, {
+      groupTabs: mock(() => Promise.reject(new Error("nope"))),
+    });
+    const actions = createActions(state, deps);
+    spyOn(console, "error").mockImplementation(() => {});
+
+    await actions.reopenGroup(saved);
+
+    expect(notify).toHaveBeenCalledWith("Couldn't reopen that group.");
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });
