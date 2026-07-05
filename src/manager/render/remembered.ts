@@ -17,13 +17,24 @@ export function renderRemembered(
   handlers: RememberedHandlers,
 ): void {
   container.textContent = "";
-  container.hidden = remembered.length === 0;
-  if (remembered.length === 0) return;
+  container.hidden = false;
 
   const label = document.createElement("h2");
   label.className = "section-label";
   label.textContent = "Saved groups (not open)";
   container.appendChild(label);
+
+  if (remembered.length === 0) {
+    const hint = document.createElement("p");
+    hint.className = "remembered-hint";
+    hint.textContent =
+      "Chrome doesn't let extensions read its saved tab groups, so Groupie " +
+      "can't see groups that haven't been open since it was installed. Open " +
+      "a saved group once (click its chip in Chrome's tab strip) and Groupie " +
+      "will remember it here, ready to reopen any time.";
+    container.appendChild(hint);
+    return;
+  }
 
   for (const group of remembered) {
     container.appendChild(renderRememberedGroup(group, handlers));

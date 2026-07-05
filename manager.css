@@ -466,6 +466,14 @@ body {
   color: var(--text-dim);
 }
 
+.remembered-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  max-width: 640px;
+}
+
 /* ---------- Empty state ---------- */
 .empty-state {
   text-align: center;

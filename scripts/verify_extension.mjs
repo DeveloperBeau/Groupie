@@ -42,6 +42,11 @@ check(
   await mgr.locator("#selection-bar").isHidden(),
 );
 
+check(
+  "saved-groups hint shows before any group is remembered",
+  await mgr.locator("#remembered-container .remembered-hint").isVisible(),
+);
+
 // --- Selection + select-all ---
 // The <input> is visually hidden (styled label), so click the label like a user.
 await mgr.locator(".tab-row .checkbox").nth(0).click();
@@ -228,7 +233,7 @@ await mgr.evaluate(() => {
 await groupNamed("Mixed");
 check("saved group reopens as a live group", true);
 await mgr.waitForFunction(
-  () => document.querySelector("#remembered-container")?.hidden,
+  () => document.querySelectorAll(".remembered-group").length === 0,
 );
 check("reopened group leaves the saved section", true);
 

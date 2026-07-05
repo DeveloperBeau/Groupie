@@ -56,9 +56,7 @@ describe("snapshotOpenGroups", () => {
 
 describe("syncRemembered", () => {
   it("upserts open groups and reports none as notOpen", () => {
-    const open = [
-      { group: group(7, "Work"), urls: ["https://a.test/"] },
-    ];
+    const open = [{ group: group(7, "Work"), urls: ["https://a.test/"] }];
     const { all, notOpen } = syncRemembered([], open, 100);
     expect(all).toHaveLength(1);
     expect(all[0]?.key).toBe(groupKey("blue", "Work"));
@@ -117,9 +115,7 @@ describe("syncRemembered", () => {
         lastGroupId: fc.integer({ min: 1, max: 30 }),
         lastSeen: fc.integer({ min: 0, max: 1000 }),
       })
-      .map((r) =>
-        remembered({ ...r, key: groupKey(r.color, r.title) }),
-      );
+      .map((r) => remembered({ ...r, key: groupKey(r.color, r.title) }));
     const arbOpen = fc
       .record({
         id: fc.integer({ min: 1, max: 30 }),
