@@ -144,3 +144,7 @@ vite.config.ts.timestamp-*
 
 # Local machine-specific overrides
 CLAUDE.local.md
+
+# Build and dependencies
+node_modules/
+dist/

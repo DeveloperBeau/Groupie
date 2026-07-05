@@ -1,0 +1,6 @@
+dist/
+node_modules/
+docs/
+icons/
+package-lock.json
+CLAUDE.local.md
