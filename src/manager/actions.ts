@@ -2,7 +2,7 @@
 // without a DOM or a real Chrome API.
 
 import type { TabsApi } from "./tabs-api";
-import type { ManagerState } from "./state";
+import type { ManagerState, RememberedGroup } from "./state";
 import { selectedTabs } from "./state";
 import { tabCountLabel } from "./format";
 
@@ -21,6 +21,7 @@ export interface Actions {
   activateTab(tab: chrome.tabs.Tab): Promise<void>;
   renameGroup(groupId: number, title: string): Promise<void>;
   groupSelected(name: string): Promise<GroupResult>;
+  reopenGroup(remembered: RememberedGroup): Promise<void>;
 }
 
 export function createActions(
@@ -121,5 +122,35 @@ export function createActions(
     }
   }
 
-  return { closeTabs, activateTab, renameGroup, groupSelected };
+  // Recreate a remembered group: open its tabs (unfocused) in this window,
+  // group them, and restore the title and color.
+  async function reopenGroup(remembered: RememberedGroup): Promise<void> {
+    try {
+      const tabIds: number[] = [];
+      for (const url of remembered.urls) {
+        const id = await tabsApi.createTab(url);
+        if (id != null) tabIds.push(id);
+      }
+      if (tabIds.length === 0) {
+        notify("Couldn't reopen that group.");
+        return;
+      }
+      const groupId = await tabsApi.groupTabs(tabIds);
+      await tabsApi.updateGroup(groupId, {
+        title: remembered.title,
+        color: remembered.color,
+      });
+      notify(
+        `Reopened “${remembered.title || "group"}” with ${tabCountLabel(
+          tabIds.length,
+        )}.`,
+      );
+    } catch (err) {
+      console.error("Groupie: failed to reopen group", err);
+      notify("Couldn't reopen that group.");
+    }
+    await reload();
+  }
+
+  return { closeTabs, activateTab, renameGroup, groupSelected, reopenGroup };
 }

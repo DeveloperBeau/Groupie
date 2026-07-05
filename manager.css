@@ -445,6 +445,35 @@ body {
   color: var(--text-faint);
 }
 
+/* ---------- Saved (remembered) groups ---------- */
+.section-label {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.remembered-container {
+  margin-top: 26px;
+}
+
+.group-name-static {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 8px;
+  color: var(--text-dim);
+}
+
+.remembered-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  max-width: 640px;
+}
+
 /* ---------- Empty state ---------- */
 .empty-state {
   text-align: center;

@@ -5,10 +5,23 @@ export const TAB_GROUP_ID_NONE = -1; // chrome.tabGroups.TAB_GROUP_ID_NONE
 export type Tab = chrome.tabs.Tab;
 export type TabGroup = chrome.tabGroups.TabGroup;
 
+// A snapshot of a group Groupie has seen open. Chrome gives extensions no API
+// for saved-but-inactive tab groups, so Groupie keeps its own record and can
+// recreate the group on demand.
+export interface RememberedGroup {
+  key: string;
+  title: string;
+  color: `${chrome.tabGroups.Color}`;
+  urls: string[];
+  lastGroupId: number;
+  lastSeen: number;
+}
+
 export interface ManagerState {
   tabs: Tab[];
   groups: Map<number, TabGroup>;
   selected: Set<number>;
+  remembered: RememberedGroup[];
   view: "list" | "grid";
   gridGroupId: number | null;
 }
@@ -18,6 +31,7 @@ export function createState(): ManagerState {
     tabs: [],
     groups: new Map(),
     selected: new Set(),
+    remembered: [],
     view: "list",
     gridGroupId: null,
   };
