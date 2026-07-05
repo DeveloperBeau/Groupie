@@ -15,7 +15,7 @@ const seed = [
   "https://www.iana.org/help/example-domains",
 ];
 
-const { extId, openManager, cleanup } = await launchWithExtension({
+const { ctx, extId, openManager, cleanup } = await launchWithExtension({
   seedUrls: seed,
 });
 console.log("extension id:", extId);
@@ -46,6 +46,25 @@ check(
   "saved-groups hint shows before any group is remembered",
   await mgr.locator("#remembered-container .remembered-hint").isVisible(),
 );
+
+// --- Regression: the tab list must render even if storage is broken ---
+// (v1.0 regression: a storage failure during loadData blanked the whole page)
+const broken = await ctx.newPage();
+await broken.addInitScript(() => {
+  chrome.storage.local.get = () => {
+    throw new Error("storage unavailable");
+  };
+  chrome.storage.local.set = () => {
+    throw new Error("storage unavailable");
+  };
+});
+await broken.goto(`chrome-extension://${extId}/manager.html`);
+const brokenRows = await broken
+  .waitForSelector(".tab-row", { timeout: 5000 })
+  .then(() => broken.locator(".tab-row").count())
+  .catch(() => 0);
+check("tab list renders even when storage fails", brokenRows >= 1);
+await broken.close();
 
 // --- Selection + select-all ---
 // The <input> is visually hidden (styled label), so click the label like a user.
