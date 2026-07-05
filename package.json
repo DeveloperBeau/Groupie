@@ -1,0 +1,33 @@
+{
+  "name": "groupie",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome tab manager extension: see, group, and close every open tab from one page.",
+  "scripts": {
+    "build": "bun scripts/build.mjs",
+    "watch": "bun scripts/build.mjs --watch",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:e2e": "bun run build && bun scripts/verify_extension.mjs",
+    "screenshots": "bun run build && bun scripts/screenshot.mjs",
+    "icons": "python3 scripts/make_icons.py"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.3.14",
+    "@types/chrome": "^0.2.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "fast-check": "^4.8.0",
+    "globals": "^17.7.0",
+    "playwright": "^1.61.1",
+    "prettier": "^3.9.4",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.62.1"
+  }
+}
