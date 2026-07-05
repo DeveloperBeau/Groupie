@@ -75,18 +75,27 @@ document.addEventListener("DOMContentLoaded", () => {
     state.groups = new Map(groups.map((g) => [g.id, g]));
     pruneSelection(state.selected, state.tabs);
 
-    // Snapshot open groups so they stay reachable after Chrome closes them.
-    const stored = await loadRemembered();
-    const { all, notOpen } = syncRemembered(
-      stored,
-      snapshotOpenGroups(state.tabs, state.groups),
-      Date.now(),
-    );
-    await saveRemembered(all);
-    if (seq !== loadSeq) return;
-    state.remembered = notOpen;
-
+    // Render the tab list before anything else: the saved-groups sync below
+    // touches chrome.storage, and a failure or hang there must never keep
+    // the core UI from appearing.
     render();
+
+    // Best-effort: snapshot open groups so they stay reachable after Chrome
+    // closes them.
+    try {
+      const stored = await loadRemembered();
+      const { all, notOpen } = syncRemembered(
+        stored,
+        snapshotOpenGroups(state.tabs, state.groups),
+        Date.now(),
+      );
+      await saveRemembered(all);
+      if (seq !== loadSeq) return;
+      state.remembered = notOpen;
+      render();
+    } catch (err) {
+      console.error("Groupie: failed to sync saved groups", err);
+    }
   }
 
   const actions = createActions(state, {
